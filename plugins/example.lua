@@ -36,5 +36,5 @@ function examplePlugin()
             end)
     end
 
-    print("[vMenu] Example Plugin Loaded")
+    print("[vMenu] Example Plugin Loaded") -- Print that the plugin has been loaded
 end
