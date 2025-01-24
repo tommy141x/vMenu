@@ -511,29 +511,7 @@ namespace vMenuClient {
     private void OpenMenu(string menuId) {
       Menu menu = null;
       if (!DynamicMenus.TryGetValue(menuId, out menu)) {
-        menu = menuId.ToLower() switch {
-          "player" => PlayerSubmenu,
-          "vehicle" => VehicleSubmenu,
-          "world" => WorldSubmenu,
-          "main" => Menu,
-          "playerOptions" => PlayerOptionsMenu.GetMenu(),
-          "onlinePlayers" => OnlinePlayersMenu.GetMenu(),
-          "bannedPlayers" => BannedPlayersMenu.GetMenu(),
-          "personalVehicle" => PersonalVehicleMenu.GetMenu(),
-          "vehicleOptions" => VehicleOptionsMenu.GetMenu(),
-          "vehicleSpawner" => VehicleSpawnerMenu.GetMenu(),
-          "playerAppearance" => PlayerAppearanceMenu.GetMenu(),
-          "mpPedCustomization" => MpPedCustomizationMenu.GetMenu(),
-          "timeOptions" => TimeOptionsMenu.GetMenu(),
-          "weatherOptions" => WeatherOptionsMenu.GetMenu(),
-          "weaponOptions" => WeaponOptionsMenu.GetMenu(),
-          "weaponLoadouts" => WeaponLoadoutsMenu.GetMenu(),
-          "recording" => RecordingMenu.GetMenu(),
-          "miscSettings" => MiscSettingsMenu.GetMenu(),
-          "voiceChat" => VoiceChatSettingsMenu.GetMenu(),
-          "about" => AboutMenu.GetMenu(),
-          _ => null
-        };
+        menu = TryGetMenu(menuId);
       }
 
       if (menu == null) {
@@ -547,29 +525,7 @@ namespace vMenuClient {
     private void AddButton(string menuId, string buttonId, string buttonLabel, string buttonDescription, object callbackObj = null) {
       Menu menu = null;
       if (!DynamicMenus.TryGetValue(menuId, out menu)) {
-        menu = menuId.ToLower() switch {
-          "player" => PlayerSubmenu,
-          "vehicle" => VehicleSubmenu,
-          "world" => WorldSubmenu,
-          "main" => Menu,
-          "playerOptions" => PlayerOptionsMenu.GetMenu(),
-          "onlinePlayers" => OnlinePlayersMenu.GetMenu(),
-          "bannedPlayers" => BannedPlayersMenu.GetMenu(),
-          "personalVehicle" => PersonalVehicleMenu.GetMenu(),
-          "vehicleOptions" => VehicleOptionsMenu.GetMenu(),
-          "vehicleSpawner" => VehicleSpawnerMenu.GetMenu(),
-          "playerAppearance" => PlayerAppearanceMenu.GetMenu(),
-          "mpPedCustomization" => MpPedCustomizationMenu.GetMenu(),
-          "timeOptions" => TimeOptionsMenu.GetMenu(),
-          "weatherOptions" => WeatherOptionsMenu.GetMenu(),
-          "weaponOptions" => WeaponOptionsMenu.GetMenu(),
-          "weaponLoadouts" => WeaponLoadoutsMenu.GetMenu(),
-          "recording" => RecordingMenu.GetMenu(),
-          "miscSettings" => MiscSettingsMenu.GetMenu(),
-          "voiceChat" => VoiceChatSettingsMenu.GetMenu(),
-          "about" => AboutMenu.GetMenu(),
-          _ => null
-        };
+        menu = TryGetMenu(menuId);
       }
 
       if (menu == null) {
@@ -594,32 +550,37 @@ namespace vMenuClient {
       menu.RefreshIndex();
     }
 
+    private Menu TryGetMenu(string menuId) {
+        return menuId.ToLower() switch {
+            "player" => PlayerSubmenu,
+            "vehicle" => VehicleSubmenu,
+            "world" => ((IsAllowed(Permission.TOMenu) && GetSettingsBool(Setting.vmenu_enable_time_sync)) ||
+                (IsAllowed(Permission.WOMenu) && GetSettingsBool(Setting.vmenu_enable_weather_sync))) ? WorldSubmenu : null,
+            "main" => Menu,
+            "playeroptions" => IsAllowed(Permission.POMenu) ? PlayerOptionsMenu.GetMenu() : null,
+            "onlineplayers" => IsAllowed(Permission.OPMenu) ? OnlinePlayersMenu.GetMenu() : null,
+            "bannedplayers" => (IsAllowed(Permission.OPUnban) || IsAllowed(Permission.OPViewBannedPlayers)) ? BannedPlayersMenu.GetMenu() : null,
+            "personalvehicle" => IsAllowed(Permission.PVMenu) ? PersonalVehicleMenu.GetMenu() : null,
+            "vehicleoptions" => IsAllowed(Permission.VOMenu) ? VehicleOptionsMenu.GetMenu() : null,
+            "vehiclespawner" => IsAllowed(Permission.VSMenu) ? VehicleSpawnerMenu.GetMenu() : null,
+            "playerappearance" => IsAllowed(Permission.PAMenu) ? PlayerAppearanceMenu.GetMenu() : null,
+            "mppedcustomization" => IsAllowed(Permission.PAMenu) ? MpPedCustomizationMenu.GetMenu() : null,
+            "timeoptions" => IsAllowed(Permission.TOMenu) && GetSettingsBool(Setting.vmenu_enable_time_sync) ? TimeOptionsMenu.GetMenu() : null,
+            "weatheroptions" => IsAllowed(Permission.WOMenu) && GetSettingsBool(Setting.vmenu_enable_weather_sync) ? WeatherOptionsMenu.GetMenu() : null,
+            "weaponoptions" => IsAllowed(Permission.WPMenu) ? WeaponOptionsMenu.GetMenu() : null,
+            "weaponloadouts" => IsAllowed(Permission.WLMenu) ? WeaponLoadoutsMenu.GetMenu() : null,
+            "recording" => RecordingMenu.GetMenu(),
+            "miscsettings" => MiscSettingsMenu.GetMenu(),
+            "voicechat" => IsAllowed(Permission.VCMenu) ? VoiceChatSettingsMenu.GetMenu() : null,
+            "about" => AboutMenu.GetMenu(),
+            _ => null
+        };
+    }
+
     private bool checkMenu (string menuId) {
         Menu menu = null;
         if (!DynamicMenus.TryGetValue(menuId, out menu)) {
-          menu = menuId.ToLower() switch {
-            "player" => PlayerSubmenu,
-            "vehicle" => VehicleSubmenu,
-            "world" => WorldSubmenu,
-            "main" => Menu,
-            "playerOptions" => PlayerOptionsMenu.GetMenu(),
-            "onlinePlayers" => OnlinePlayersMenu.GetMenu(),
-            "bannedPlayers" => BannedPlayersMenu.GetMenu(),
-            "personalVehicle" => PersonalVehicleMenu.GetMenu(),
-            "vehicleOptions" => VehicleOptionsMenu.GetMenu(),
-            "vehicleSpawner" => VehicleSpawnerMenu.GetMenu(),
-            "playerAppearance" => PlayerAppearanceMenu.GetMenu(),
-            "mpPedCustomization" => MpPedCustomizationMenu.GetMenu(),
-            "timeOptions" => TimeOptionsMenu.GetMenu(),
-            "weatherOptions" => WeatherOptionsMenu.GetMenu(),
-            "weaponOptions" => WeaponOptionsMenu.GetMenu(),
-            "weaponLoadouts" => WeaponLoadoutsMenu.GetMenu(),
-            "recording" => RecordingMenu.GetMenu(),
-            "miscSettings" => MiscSettingsMenu.GetMenu(),
-            "voiceChat" => VoiceChatSettingsMenu.GetMenu(),
-            "about" => AboutMenu.GetMenu(),
-            _ => null
-          };
+          menu = TryGetMenu(menuId);
         }
 
         if (menu == null) {
@@ -631,39 +592,21 @@ namespace vMenuClient {
     private void AddSubmenuButton(string parentMenuId, string submenuId, string buttonLabel, string buttonDescription) {
       Menu parentMenu = null;
       if (!DynamicMenus.TryGetValue(parentMenuId, out parentMenu)) {
-        parentMenu = parentMenuId.ToLower() switch {
-          "player" => PlayerSubmenu,
-          "vehicle" => VehicleSubmenu,
-          "world" => WorldSubmenu,
-          "main" => Menu,
-          "playerOptions" => PlayerOptionsMenu.GetMenu(),
-          "onlinePlayers" => OnlinePlayersMenu.GetMenu(),
-          "bannedPlayers" => BannedPlayersMenu.GetMenu(),
-          "personalVehicle" => PersonalVehicleMenu.GetMenu(),
-          "vehicleOptions" => VehicleOptionsMenu.GetMenu(),
-          "vehicleSpawner" => VehicleSpawnerMenu.GetMenu(),
-          "playerAppearance" => PlayerAppearanceMenu.GetMenu(),
-          "mpPedCustomization" => MpPedCustomizationMenu.GetMenu(),
-          "timeOptions" => TimeOptionsMenu.GetMenu(),
-          "weatherOptions" => WeatherOptionsMenu.GetMenu(),
-          "weaponOptions" => WeaponOptionsMenu.GetMenu(),
-          "weaponLoadouts" => WeaponLoadoutsMenu.GetMenu(),
-          "recording" => RecordingMenu.GetMenu(),
-          "miscSettings" => MiscSettingsMenu.GetMenu(),
-          "voiceChat" => VoiceChatSettingsMenu.GetMenu(),
-          "about" => AboutMenu.GetMenu(),
-          _ => null
-        };
+          parentMenu = TryGetMenu(parentMenuId);
       }
 
       Menu submenu = null;
       if (!DynamicMenus.TryGetValue(submenuId, out submenu)) {
-        Debug.WriteLine($"[vMenu] Submenu with ID {submenuId} not found.");
-        return;
+          submenu = TryGetMenu(submenuId);
       }
 
       if (parentMenu == null) {
         Debug.WriteLine($"[vMenu] Parent menu {parentMenuId} not found.");
+        return;
+      }
+
+      if (submenu == null) {
+        Debug.WriteLine($"[vMenu] Submenu {submenuId} not found.");
         return;
       }
 
@@ -682,29 +625,7 @@ namespace vMenuClient {
     private void RemoveButton(string menuId, string buttonId) {
       Menu menu = null;
       if (!DynamicMenus.TryGetValue(menuId, out menu)) {
-        menu = menuId.ToLower() switch {
-          "player" => PlayerSubmenu,
-          "vehicle" => VehicleSubmenu,
-          "world" => WorldSubmenu,
-          "main" => Menu,
-          "playerOptions" => PlayerOptionsMenu.GetMenu(),
-          "onlinePlayers" => OnlinePlayersMenu.GetMenu(),
-          "bannedPlayers" => BannedPlayersMenu.GetMenu(),
-          "personalVehicle" => PersonalVehicleMenu.GetMenu(),
-          "vehicleOptions" => VehicleOptionsMenu.GetMenu(),
-          "vehicleSpawner" => VehicleSpawnerMenu.GetMenu(),
-          "playerAppearance" => PlayerAppearanceMenu.GetMenu(),
-          "mpPedCustomization" => MpPedCustomizationMenu.GetMenu(),
-          "timeOptions" => TimeOptionsMenu.GetMenu(),
-          "weatherOptions" => WeatherOptionsMenu.GetMenu(),
-          "weaponOptions" => WeaponOptionsMenu.GetMenu(),
-          "weaponLoadouts" => WeaponLoadoutsMenu.GetMenu(),
-          "recording" => RecordingMenu.GetMenu(),
-          "miscSettings" => MiscSettingsMenu.GetMenu(),
-          "voiceChat" => VoiceChatSettingsMenu.GetMenu(),
-          "about" => AboutMenu.GetMenu(),
-          _ => null
-        };
+        menu = TryGetMenu(menuId);
       }
 
       if (menu == null) {
@@ -724,29 +645,7 @@ namespace vMenuClient {
     private void ClearMenu(string menuId) {
       Menu menu = null;
       if (!DynamicMenus.TryGetValue(menuId, out menu)) {
-        menu = menuId.ToLower() switch {
-          "player" => PlayerSubmenu,
-          "vehicle" => VehicleSubmenu,
-          "world" => WorldSubmenu,
-          "main" => Menu,
-          "playerOptions" => PlayerOptionsMenu.GetMenu(),
-          "onlinePlayers" => OnlinePlayersMenu.GetMenu(),
-          "bannedPlayers" => BannedPlayersMenu.GetMenu(),
-          "personalVehicle" => PersonalVehicleMenu.GetMenu(),
-          "vehicleOptions" => VehicleOptionsMenu.GetMenu(),
-          "vehicleSpawner" => VehicleSpawnerMenu.GetMenu(),
-          "playerAppearance" => PlayerAppearanceMenu.GetMenu(),
-          "mpPedCustomization" => MpPedCustomizationMenu.GetMenu(),
-          "timeOptions" => TimeOptionsMenu.GetMenu(),
-          "weatherOptions" => WeatherOptionsMenu.GetMenu(),
-          "weaponOptions" => WeaponOptionsMenu.GetMenu(),
-          "weaponLoadouts" => WeaponLoadoutsMenu.GetMenu(),
-          "recording" => RecordingMenu.GetMenu(),
-          "miscSettings" => MiscSettingsMenu.GetMenu(),
-          "voiceChat" => VoiceChatSettingsMenu.GetMenu(),
-          "about" => AboutMenu.GetMenu(),
-          _ => null
-        };
+        menu = TryGetMenu(menuId);
       }
 
       if (menu == null) {
