@@ -575,7 +575,12 @@ namespace vMenuClient {
             CallbackDelegate callback = (CallbackDelegate)callbackObj;
             menu.OnListIndexChange += (sender, item, oldIndex, newIndex, itemIndex) => {
                 if (item == menuListItem) {
-                    callback.Invoke(oldIndex, newIndex, item.ListItems[newIndex]);
+                    callback.Invoke(oldIndex, newIndex, item.ListItems[newIndex], false);
+                }
+            };
+            menu.OnListItemSelect += (sender, item, listIndex, itemIndex) => {
+                if (item == menuListItem) {
+                    callback.Invoke(null, null, item.ListItems[listIndex], true);
                 }
             };
         }
