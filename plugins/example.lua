@@ -11,12 +11,14 @@ function examplePlugin()
         -- Add a button with a callback
         exports["vMenu"]:AddButton("exampleid", "examplebuttonid", "Example Button", "Example Button Description",
             function()
-                exports["vMenu"]:Notify("Example ~r~Button ~w~Pressed")
+                exports["vMenu"]:Notify("Example ~r~Button ~w~Pressed", "error")
+                exports["vMenu"]:Notify("Example ~g~Button ~w~Pressed", "success")
+                exports["vMenu"]:Notify("Example ~y~Button ~w~Pressed", "alert")
             end)
 
         -- Add a list with a callback
         local doors = json.encode({ "Front Left", "Front Right", "Rear Left", "Rear Right" })
-        exports["vMenu"]:AddList("exampleid", "removeDoorList", "Remove Door", doors, 0, "Select a door to remove.",
+        exports["vMenu"]:AddList("exampleid", "removeDoorList", "Select Door", doors, 0, "Select a door.",
             function(oldIndex, selectedIndex, selectedOption)
                 exports["vMenu"]:Notify("Selected Door Index: ~g~" .. selectedIndex)
                 exports["vMenu"]:Notify("Selected Door: ~g~" .. selectedOption)
@@ -24,7 +26,7 @@ function examplePlugin()
             end)
 
         -- Add a checkbox with a callback
-        exports["vMenu"]:AddCheckbox("exampleid", "enableBlip", "Add Blip For Personal Vehicle",
+        exports["vMenu"]:AddCheckbox("exampleid", "enableBlip", "Add Blip For Personal Vehicle (not implemented)",
             "Toggle blip for your personal vehicle.", false, function(isChecked)
                 if isChecked then
                     exports["vMenu"]:Notify("Blip ~g~enabled~w~ for your personal vehicle.")
