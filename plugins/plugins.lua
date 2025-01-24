@@ -3,7 +3,8 @@ local isServer = IsDuplicityVersion()
 local enabledPlugins = { examplePlugin } -- Add your plugins init functions here
 vMenuExtReady = false                    -- A global variable to check if the extensions API is ready
 
--- Construction of the main menu, if you want to add custom main submenus in a custom order, you can do it here
+-- Reconstruction of the main menu, if you want to add custom main submenus in a custom order, you can do it here
+local useReconstruction = true           -- If you want to reconstruct the main menu, set this to true
 local constructMainMenu = function()
     exports["vMenu"]:ClearMenu("main")
     --exports["vMenu"]:CreateMenu("roleplay", "Roleplay Related Options")
@@ -44,7 +45,9 @@ end)
 
 function init()
     print("[vMenu] Extensions API is ready!")
-    constructMainMenu()
+    if not isServer and useReconstruction then
+        constructMainMenu()
+    end
     for _, plugin in ipairs(enabledPlugins) do
         plugin()
     end

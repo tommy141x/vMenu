@@ -176,8 +176,10 @@ namespace vMenuClient {
       // Menu Modification
       Exports.Add("AddButton", new Action < string, string, string, string, object > (AddButton));
       Exports.Add("AddSubmenuButton", new Action < string, string, string, string > (AddSubmenuButton));
-      Exports.Add("RemoveButton", new Action < string, string > (RemoveButton));
+      Exports.Add("RemoveItem", new Action < string, string > (RemoveItem));
       Exports.Add("ClearMenu", new Action < string > (ClearMenu));
+      Exports.Add("AddList", new Action < string, string, string, string, int, string, object > (AddList));
+      Exports.Add("AddCheckbox", new Action < string, string, string, string, bool, object > (AddCheckbox));
 
       Exports.Add("Notify", new Action < string, string > (notifExp));
       Exports.Add("CheckMenu", new Func<string, bool>(checkMenu));
@@ -519,6 +521,8 @@ namespace vMenuClient {
         return;
       }
 
+      MenuController.CloseAllMenus();
+
       menu.OpenMenu();
     }
 
@@ -549,6 +553,65 @@ namespace vMenuClient {
       menu.AddMenuItem(menuItem);
       menu.RefreshIndex();
     }
+
+    private void AddList(string menuId, string listId, string listLabel, string jsonoptions, int defaultIndex, string description, object callbackObj = null) {
+        Menu menu = null;
+        if (!DynamicMenus.TryGetValue(menuId, out menu)) {
+            menu = TryGetMenu(menuId);
+        }
+
+        if (menu == null) {
+            Debug.WriteLine($"[vMenu] Menu with ID {menuId} not found.");
+            return;
+        }
+
+        var options = JsonConvert.DeserializeObject < List < string >> (jsonoptions);
+
+        var menuListItem = new MenuListItem(listLabel, options, defaultIndex, description) {
+            ItemData = listId
+        };
+
+        if (callbackObj != null) {
+            CallbackDelegate callback = (CallbackDelegate)callbackObj;
+            menu.OnListIndexChange += (sender, item, oldIndex, newIndex, itemIndex) => {
+                if (item == menuListItem) {
+                    callback.Invoke(oldIndex, newIndex, item.ListItems[newIndex]);
+                }
+            };
+        }
+
+        menu.AddMenuItem(menuListItem);
+        menu.RefreshIndex();
+    }
+
+    private void AddCheckbox(string menuId, string checkboxId, string checkboxLabel, string description, bool defaultValue, object callbackObj = null) {
+        Menu menu = null;
+        if (!DynamicMenus.TryGetValue(menuId, out menu)) {
+            menu = TryGetMenu(menuId);
+        }
+
+        if (menu == null) {
+            Debug.WriteLine($"[vMenu] Menu with ID {menuId} not found.");
+            return;
+        }
+
+        var menuCheckboxItem = new MenuCheckboxItem(checkboxLabel, description, defaultValue) {
+            ItemData = checkboxId
+        };
+
+        if (callbackObj != null) {
+            CallbackDelegate callback = (CallbackDelegate)callbackObj;
+            menu.OnCheckboxChange += (sender, item, index, isChecked) => {
+                if (item == menuCheckboxItem) {
+                    callback.Invoke(isChecked);
+                }
+            };
+        }
+
+        menu.AddMenuItem(menuCheckboxItem);
+        menu.RefreshIndex();
+    }
+
 
     private Menu TryGetMenu(string menuId) {
         return menuId.ToLower() switch {
@@ -622,24 +685,34 @@ namespace vMenuClient {
       submenu.RefreshIndex();
     }
 
-    private void RemoveButton(string menuId, string buttonId) {
-      Menu menu = null;
-      if (!DynamicMenus.TryGetValue(menuId, out menu)) {
-        menu = TryGetMenu(menuId);
-      }
+    private void RemoveItem(string menuId, string itemId) {
+        Menu menu = null;
+        if (!DynamicMenus.TryGetValue(menuId, out menu)) {
+            menu = TryGetMenu(menuId);
+        }
 
-      if (menu == null) {
-        Debug.WriteLine($"[vMenu] Menu with ID {menuId} not found.");
-        return;
-      }
+        if (menu == null) {
+            Debug.WriteLine($"[vMenu] Menu with ID {menuId} not found.");
+            return;
+        }
 
-      var itemToRemove = menu.GetMenuItems().Find(item => item.ItemData as string == buttonId);
-      if (itemToRemove != null) {
-        menu.RemoveMenuItem(itemToRemove);
-        menu.RefreshIndex();
-      } else {
-        Debug.WriteLine($"[vMenu] Button with ID {buttonId} not found in menu {menuId}.");
-      }
+        // Find the item to remove, regardless of its type
+        var itemToRemove = menu.GetMenuItems().Find(item => item.ItemData as string == itemId);
+
+        if (itemToRemove != null) {
+            menu.RemoveMenuItem(itemToRemove);
+            menu.RefreshIndex();
+            Debug.WriteLine($"[vMenu] Item with ID {itemId} removed from menu {menuId}.");
+        } else {
+            Debug.WriteLine($"[vMenu] Item with ID {itemId} not found in menu {menuId}.");
+        }
+
+        // If the item is a submenu, handle additional cleanup
+        if (DynamicMenus.ContainsKey(itemId)) {
+            var submenu = DynamicMenus[itemId];
+            DynamicMenus.Remove(itemId);
+            Debug.WriteLine($"[vMenu] Submenu with ID {itemId} removed.");
+        }
     }
 
     private void ClearMenu(string menuId) {

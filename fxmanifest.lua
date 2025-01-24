@@ -29,14 +29,16 @@ files {
 
 client_script 'vMenuClient.net.dll'
 server_script 'vMenuServer.net.dll'
-shared_script { 'extensions/plugins.lua', 'extensions/*.lua', 'extensions/***/*.lua' }
+shared_script { 'plugins/plugins.lua', 'plugins/*.lua', 'plugins/***/*.lua' }
 
-exports {
+client_exports {
     "CreateMenu",
     "OpenMenu",
     "AddButton",
+    "AddList",
+    "AddCheckbox",
     "AddSubmenuButton",
-    "RemoveButton",
+    "RemoveItem",
     "ClearMenu",
     "CheckMenu",
     "Notify",

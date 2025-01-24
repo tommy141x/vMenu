@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-  <None Include="..\SharedClasses\extensions\**\*.*">
+  <None Include="..\SharedClasses\plugins\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </None>
    <None Update="fxmanifest.lua">
@@ -65,10 +65,6 @@
 
   <ItemGroup>
     <EditorConfigFiles Remove="D:\tomgr\Documents\GitHub-Repos\vMenu\vMenu\vMenu\.editorconfig" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="..\SharedClasses\extensions\plugin-config.lua" />
   </ItemGroup>
 
   <ItemGroup>

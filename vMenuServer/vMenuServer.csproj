@@ -19,9 +19,9 @@
   </ItemGroup>
 
  <ItemGroup>
-    <None Include="..\extensions\*.lua">
+    <None Include="..\plugins\*.lua">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        <Link>extensions\%(Filename)%(Extension)</Link>
+        <Link>plugins\%(Filename)%(Extension)</Link>
     </None>
    <None Include="..\fxmanifest.lua">
     <CopyToOutputDirectory>Always</CopyToOutputDirectory>
