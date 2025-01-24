@@ -18,13 +18,23 @@
     <Compile Include="..\SharedClasses\PermissionsManager.cs" Link="PermissionsManager.cs" />
   </ItemGroup>
 
+ <ItemGroup>
+    <None Include="..\extensions\*.lua">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        <Link>extensions\%(Filename)%(Extension)</Link>
+    </None>
+   <None Include="..\fxmanifest.lua">
+    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+</None>
+   </ItemGroup>
+
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
-    
+
     <PackageReference Include="CitizenFX.Core.Server" Version="1.0.8883">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
-    
+
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\dependencies\shared\Newtonsoft.Json.dll</HintPath>
       <Private>false</Private>
