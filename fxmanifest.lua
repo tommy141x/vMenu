@@ -29,7 +29,12 @@ files {
 
 client_script 'vMenuClient.net.dll'
 server_script 'vMenuServer.net.dll'
-shared_script { 'plugins/plugins.lua', 'plugins/*.lua', 'plugins/***/*.lua' }
+shared_script { 'plugins/***/*.lua' }
+
+exports {
+    "pluginsReady",
+    "waitForPlugins",
+}
 
 client_exports {
     "CreateMenu",

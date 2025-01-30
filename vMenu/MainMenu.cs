@@ -175,7 +175,7 @@ namespace vMenuClient {
 
       // Menu Modification
       Exports.Add("AddButton", new Action < string, string, string, string, object > (AddButton));
-      Exports.Add("AddSubmenuButton", new Action < string, string, string, string > (AddSubmenuButton));
+      Exports.Add("AddSubmenuButton", new Action < string, string, string, string, object > (AddSubmenuButton));
       Exports.Add("RemoveItem", new Action < string, string > (RemoveItem));
       Exports.Add("ClearMenu", new Action < string > (ClearMenu));
       Exports.Add("AddList", new Action < string, string, string, string, int, string, object > (AddList));
@@ -657,7 +657,7 @@ namespace vMenuClient {
         return true;
     }
 
-    private void AddSubmenuButton(string parentMenuId, string submenuId, string buttonLabel, string buttonDescription) {
+    private void AddSubmenuButton(string parentMenuId, string submenuId, string buttonLabel, string buttonDescription, object callbackObj = null) {
       Menu parentMenu = null;
       if (!DynamicMenus.TryGetValue(parentMenuId, out parentMenu)) {
           parentMenu = TryGetMenu(parentMenuId);
@@ -685,6 +685,15 @@ namespace vMenuClient {
       MenuController.AddSubmenu(parentMenu, submenu);
       parentMenu.AddMenuItem(submenuButton);
       MenuController.BindMenuItem(parentMenu, submenu, submenuButton);
+
+      if (callbackObj != null) {
+        CallbackDelegate callback = (CallbackDelegate) callbackObj;
+        parentMenu.OnItemSelect += (sender, item, index) => {
+          if (item == submenuButton) {
+            callback.Invoke();
+          }
+        };
+      }
 
       parentMenu.RefreshIndex();
       submenu.RefreshIndex();

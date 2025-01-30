@@ -6,25 +6,25 @@
 local dynamicButtons = {}
 local buttonCounter = 0
 
-local isServer = IsDuplicityVersion()
-function examplePlugin()
-    if not isServer then
-        createMainMenu()
-        createDynamicButtonMenu()
-        createInteractiveListMenu()
-        createCheckboxShowcaseMenu()
+ExamplePlugin = {
+    name = "Example Plugin",
+    version = "1.0.0",
+    author = "TIMMYG",
+    dependencies = {},
+    mainSubMenu = { -- Optionally add a main submenu for your plugin
+        id = "example_main",
+        title = "Plugin Example",
+        desc = "Menu demonstrations",
+        position = 6
+    },
+    init = function()
+        if not IsDuplicityVersion() then
+            createDynamicButtonMenu()
+            createInteractiveListMenu()
+            createCheckboxShowcaseMenu()
+        end
     end
-
-    print("[vMenu] Example Plugin Loaded.")
-end
-
-function createMainMenu()
-    -- Create main menu
-    exports["vMenu"]:CreateMenu("example_main", "Example Plugin")
-
-    -- Add submenu button to existing main menu
-    exports["vMenu"]:AddSubmenuButton("main", "example_main", "Plugin Example", "Advanced menu demonstrations")
-end
+}
 
 function createDynamicButtonMenu()
     exports["vMenu"]:CreateMenu("dynamic_buttons", "Dynamic Button Management")

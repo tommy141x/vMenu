@@ -1,9 +1,25 @@
 --[[
     Cinematic Camera Plugin for vMenu (Originally made by KIMINAZE, ported to a vMenu plugin by Tommy)
     Provides advanced camera controls with menu integration
-
-    Add "CinematicCamPlugin" to the plugins list in the vMenu config file to enable this plugin
 ]]
+
+CinematicCamPlugin       = {
+    name = "Cinematic Camera Plugin",
+    version = "1.0.0",
+    author = "TIMMYG",
+    dependencies = {},
+    mainSubMenu = {
+        id = "cinematic_cam",
+        title = "Camera Options",
+        desc = "Take some dope screenshots.",
+        position = 6 -- Should be the second submenu button in the main menu
+    },
+    init = function()
+        if not IsDuplicityVersion() then
+            createCinematicCamMenu()
+        end
+    end
+}
 
 local Config             = {}
 
@@ -87,7 +103,7 @@ Config.disabledControls  = {
 
 Config.menuTitle         = "Cinematic Cam"
 Config.menuSubtitle      = "Control the Cinematic Camera"
-Config.toggleCam         = "Camera active"
+Config.toggleCam         = "Camera Active"
 Config.toggleCamDesc     = "Toggle camera on/off"
 Config.precision         = "Camera Precision"
 Config.precisionDesc     = "Change camera precision movement"
@@ -128,22 +144,7 @@ for i = Config.minPrecision, Config.maxPrecision + 0.01, Config.incrPrecision do
     end
 end
 
--- Only run on client
-local isServer = IsDuplicityVersion()
-function CinematicCamPlugin()
-    if not isServer then
-        createCinematicCamMenu()
-    end
-    print("[vMenu] Cinematic Cam Plugin Loaded.")
-end
-
 function createCinematicCamMenu()
-    -- Create cinematic cam menu
-    exports["vMenu"]:CreateMenu("cinematic_cam", Config.menuTitle)
-
-    -- Add submenu button to main menu
-    exports["vMenu"]:AddSubmenuButton("main", "cinematic_cam", Config.menuTitle, Config.menuSubtitle)
-
     -- Camera toggle checkbox
     exports["vMenu"]:AddCheckbox("cinematic_cam", "toggle_cam", Config.toggleCam,
         Config.toggleCamDesc, false, function(isChecked)
