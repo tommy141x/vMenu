@@ -482,6 +482,10 @@ namespace vMenuClient {
     }
     #endregion
 
+    #region Exports for Plugin Usage
+    /// <summary>
+    /// Exports.
+    /// </summary>
     private void CreateMenu(string menuId, string menuTitle, object callbackObj = null) {
       if (DynamicMenus.ContainsKey(menuId)) {
         Debug.WriteLine($"[vMenu] Menu with ID {menuId} already exists.");
@@ -742,6 +746,7 @@ namespace vMenuClient {
       menu.ClearMenuItems();
       menu.RefreshIndex();
     }
+    #endregion
 
     /// <summary>
     /// This setups things as soon as the permissions are loaded.
