@@ -200,20 +200,20 @@ namespace vMenuClient.menus
 
             /*
 
-            0               Blemishes             0 - 23,   255  
-            1               Facial Hair           0 - 28,   255  
-            2               Eyebrows              0 - 33,   255  
-            3               Ageing                0 - 14,   255  
-            4               Makeup                0 - 74,   255  
-            5               Blush                 0 - 6,    255  
-            6               Complexion            0 - 11,   255  
-            7               Sun Damage            0 - 10,   255  
-            8               Lipstick              0 - 9,    255  
-            9               Moles/Freckles        0 - 17,   255  
-            10              Chest Hair            0 - 16,   255  
-            11              Body Blemishes        0 - 11,   255  
-            12              Add Body Blemishes    0 - 1,    255  
-            
+            0               Blemishes             0 - 23,   255
+            1               Facial Hair           0 - 28,   255
+            2               Eyebrows              0 - 33,   255
+            3               Ageing                0 - 14,   255
+            4               Makeup                0 - 74,   255
+            5               Blush                 0 - 6,    255
+            6               Complexion            0 - 11,   255
+            7               Sun Damage            0 - 10,   255
+            8               Lipstick              0 - 9,    255
+            9               Moles/Freckles        0 - 17,   255
+            10              Chest Hair            0 - 16,   255
+            11              Body Blemishes        0 - 11,   255
+            12              Add Body Blemishes    0 - 1,    255
+
             */
 
 
@@ -1385,26 +1385,26 @@ namespace vMenuClient.menus
 
             #region face shape data
             /*
-            Nose_Width  
-            Nose_Peak_Hight  
-            Nose_Peak_Lenght  
-            Nose_Bone_High  
-            Nose_Peak_Lowering  
-            Nose_Bone_Twist  
-            EyeBrown_High  
-            EyeBrown_Forward  
-            Cheeks_Bone_High  
-            Cheeks_Bone_Width  
-            Cheeks_Width  
-            Eyes_Openning  
-            Lips_Thickness  
-            Jaw_Bone_Width 'Bone size to sides  
-            Jaw_Bone_Back_Lenght 'Bone size to back  
-            Chimp_Bone_Lowering 'Go Down  
-            Chimp_Bone_Lenght 'Go forward  
-            Chimp_Bone_Width  
-            Chimp_Hole  
-            Neck_Thikness  
+            Nose_Width
+            Nose_Peak_Hight
+            Nose_Peak_Lenght
+            Nose_Bone_High
+            Nose_Peak_Lowering
+            Nose_Bone_Twist
+            EyeBrown_High
+            EyeBrown_Forward
+            Cheeks_Bone_High
+            Cheeks_Bone_Width
+            Cheeks_Width
+            Eyes_Openning
+            Lips_Thickness
+            Jaw_Bone_Width 'Bone size to sides
+            Jaw_Bone_Back_Lenght 'Bone size to back
+            Chimp_Bone_Lowering 'Go Down
+            Chimp_Bone_Lenght 'Go forward
+            Chimp_Bone_Width
+            Chimp_Hole
+            Neck_Thikness
             */
 
             var faceFeaturesValuesList = new List<float>()
@@ -2002,10 +2002,10 @@ namespace vMenuClient.menus
                 SetPedHeadOverlayColor(Game.PlayerPed.Handle, 8, 2, appData.lipstickColor, appData.lipstickColor);
                 // moles and freckles
                 SetPedHeadOverlay(Game.PlayerPed.Handle, 9, appData.molesFrecklesStyle, appData.molesFrecklesOpacity);
-                // chest hair 
+                // chest hair
                 SetPedHeadOverlay(Game.PlayerPed.Handle, 10, appData.chestHairStyle, appData.chestHairOpacity);
                 SetPedHeadOverlayColor(Game.PlayerPed.Handle, 10, 1, appData.chestHairColor, appData.chestHairColor);
-                // body blemishes 
+                // body blemishes
                 SetPedHeadOverlay(Game.PlayerPed.Handle, 11, appData.bodyBlemishesStyle, appData.bodyBlemishesOpacity);
                 // eyecolor
                 SetPedEyeColor(Game.PlayerPed.Handle, appData.eyeColor);
@@ -2111,6 +2111,7 @@ namespace vMenuClient.menus
             var spawnPed = new MenuItem("Spawn Saved Character", "Spawns the selected saved character.");
             editPedBtn = new MenuItem("Edit Saved Character", "This allows you to edit everything about your saved character. The changes will be saved to this character's save file entry once you hit the save button.");
             var clonePed = new MenuItem("Clone Saved Character", "This will make a clone of your saved character. It will ask you to provide a name for that character. If that name is already taken the action will be canceled.");
+            var updatePed = new MenuItem("Update Character Clothing", "This will update the saved character with the current player's clothing.");
             var setAsDefaultPed = new MenuItem("Set As Default Character", "If you set this character as your default character, and you enable the 'Respawn As Default MP Character' option in the Misc Settings menu, then you will be set as this character whenever you (re)spawn.");
             var renameCharacter = new MenuItem("Rename Saved Character", "You can rename this saved character. If the name is already taken then the action will be canceled.");
             var delPed = new MenuItem("Delete Saved Character", "Deletes the selected saved character. This can not be undone!")
@@ -2120,6 +2121,7 @@ namespace vMenuClient.menus
             manageSavedCharacterMenu.AddMenuItem(spawnPed);
             manageSavedCharacterMenu.AddMenuItem(editPedBtn);
             manageSavedCharacterMenu.AddMenuItem(clonePed);
+            manageSavedCharacterMenu.AddMenuItem(updatePed);
             manageSavedCharacterMenu.AddMenuItem(setCategoryBtn);
             manageSavedCharacterMenu.AddMenuItem(setAsDefaultPed);
             manageSavedCharacterMenu.AddMenuItem(renameCharacter);
@@ -2172,6 +2174,53 @@ namespace vMenuClient.menus
                                 Notify.Error("The clone could not be created, reason unknown. Does a character already exist with that name? :(");
                             }
                         }
+                    }
+                }
+                else if (item == updatePed)
+                {
+                    // Load the selected MP ped data into the currentCharacter object
+                    currentCharacter = StorageManager.GetSavedMpCharacterData(selectedSavedCharacterManageName);
+
+                    // Load current player's ped clothing and props data into the currentCharacter object
+                    var playerPed = Game.PlayerPed.Handle;
+
+                    // Load clothing data
+                    currentCharacter.DrawableVariations.clothes = new Dictionary<int, KeyValuePair<int, int>>();
+                    for (var i = 0; i < 12; i++)
+                    {
+                        if (i is not 0 and not 2) // Skip unused categories
+                        {
+                            var drawable = GetPedDrawableVariation(playerPed, i);
+                            var texture = GetPedTextureVariation(playerPed, i);
+                            currentCharacter.DrawableVariations.clothes[i] = new KeyValuePair<int, int>(drawable, texture);
+                        }
+                    }
+
+                    // Load props data
+                    currentCharacter.PropVariations.props = new Dictionary<int, KeyValuePair<int, int>>();
+                    for (var i = 0; i < 5; i++)
+                    {
+                        var propId = i;
+                        if (i > 2)
+                        {
+                            propId += 3;
+                        }
+
+                        var propIndex = GetPedPropIndex(playerPed, propId);
+                        var propTexture = GetPedPropTextureIndex(playerPed, propId);
+                        currentCharacter.PropVariations.props[propId] = new KeyValuePair<int, int>(propIndex, propTexture);
+                    }
+
+                    isEdidtingPed = true;
+
+                    // Save the updated ped data
+                    if (await SavePed())
+                    {
+                        isEdidtingPed = false;
+                    }
+                    else
+                    {
+                        isEdidtingPed = false;
                     }
                 }
                 else if (item == renameCharacter)
