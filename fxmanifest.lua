@@ -24,12 +24,12 @@ files {
     'MenuAPI.dll',
     'config/locations.json',
     'config/addons.json',
-    'storage.html'
+    'storage.html',
 }
 
 client_script 'vMenuClient.net.dll'
 server_script 'vMenuServer.net.dll'
-shared_script { 'plugins/***/*.lua' }
+shared_script 'plugins/***/*.lua'
 
 exports {
     "pluginsReady",

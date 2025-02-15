@@ -1,7 +1,9 @@
 -- Characters Plugin for vMenu
 -- Add "FrameworkPlugin" to the "plugins" table in the vMenu config file to enable this plugin.
 -- This plugin requires the resource "u5_sqlite" from https://github.com/AdrianCeku/u5_sqlite
+-- Add: dependency 'u5_sqlite'    to the fxmanifest.
 -- Configure the jobs, genders, and ethnicities below:
+-- Look at the exports provided in this file to see how to integrate this into your server.
 
 local Config = {
     Jobs = {
@@ -11,25 +13,25 @@ local Config = {
             acePerm = "",
         },
         {
-                name = "LSPD",
-                type = "police",
-                acePerm = "",
-            },
-            {
-                    name = "SAHP",
-                    type = "police",
-                    acePerm = "",
-                },
-            {
-                    name = "BCSO",
-                    type = "police",
-                    acePerm = "",
-                },
-                {
-                    name = "SAFR",
-                    type = "medical",
-                    acePerm = "",
-                },
+            name = "LSPD",
+            type = "police",
+            acePerm = "",
+        },
+        {
+            name = "SAHP",
+            type = "police",
+            acePerm = "",
+        },
+        {
+            name = "BCSO",
+            type = "police",
+            acePerm = "",
+        },
+        {
+            name = "SAFR",
+            type = "medical",
+            acePerm = "",
+        },
     },
     -- job should still just be set to the job name as a lowercase string
     -- but now when getCharacter is called from client or server it should return the job type
@@ -41,6 +43,7 @@ local Config = {
 
 
 FrameworkPlugin = {
+    id = "framework",
     name = "Framework Plugin",
     version = "1.0.0",
     author = "TIMMYG",
@@ -54,24 +57,73 @@ FrameworkPlugin = {
         position = 2 -- Should be the second submenu button in the main menu
     },
     dependencies = {},
-    init = function()
+    unload = function()
 
-    local function getJobType(jobName)
-        -- Convert job name to lowercase for case-insensitive comparison
-        jobName = string.lower(jobName)
-        for _, jobData in ipairs(Config.Jobs) do
-            if string.lower(jobData.name) == jobName then
-                return jobData.type
+    end,
+    init = function(self)
+        local function getJobType(jobName)
+            if not jobName then
+                return "civ" -- Default type if jobName is nil
             end
+            -- Convert job name to lowercase for case-insensitive comparison
+            jobName = string.lower(jobName)
+            for _, jobData in ipairs(Config.Jobs) do
+                if string.lower(jobData.name) == jobName then
+                    return jobData.type
+                end
+            end
+            return "civ" -- Default type if not found
         end
-        return "civ" -- Default type if not found
-    end
+
+        function parseName(fullName)
+            -- Returns blank callsign for "[5D-319] Bubble Jones"
+            if not fullName then
+                return {
+                    callsign = "",
+                    firstName = "",
+                    lastName = "",
+                    fullName = "",
+                    originalName = ""
+                }
+            end
+
+            -- Extract the callsign first
+            local callsign = fullName:match("%[(.-)%]") or ""
+
+            -- Remove any bracketed tags to get the name
+            local nameWithoutTag = fullName:gsub("%[.-%]%s*", "")
+
+            -- Split the remaining string into first and last name
+            local firstName, lastName = nameWithoutTag:match("(%S+)%s+(%S+)")
+
+            return {
+                callsign = callsign,
+                firstName = firstName or "",
+                lastName = lastName or "",
+                fullName = firstName .. " " .. lastName,
+                originalName = fullName
+            }
+        end
+
+        function processChar(char)
+            if char.firstName and char.jobType then return char end
+            local jobType = getJobType(char.job)
+            local nameData = parseName(char.name)
+            char.jobType = jobType or "civ"
+            char.callsign = nameData.callsign or ""
+            char.firstName = nameData.firstName or ""
+            char.lastName = nameData.lastName or ""
+            char.name = nameData.fullName or char.name
+            char.fullName = nameData.originalName or char.name
+            return char
+        end
 
         if IsDuplicityVersion() then
             local db = exports["u5_sqlite"]
             local globalState = {
                 allCharacters = {},
-                allVehicles = {}
+                allVehicles = {},
+                OnlineCharacters = {}
             }
 
             -- Function to broadcast state updates to all clients
@@ -80,9 +132,12 @@ FrameworkPlugin = {
                 globalState.allCharacters = db:select("characters", { "*" }, {}, true) or {}
                 globalState.allVehicles = db:select("vehicles", { "*" }, {}, true) or {}
 
-                -- Add jobType for each character
+                local onlineCharacters = exports["vMenu"]:getOnlineCharacters()
+
+                globalState.OnlineCharacters = onlineCharacters
+
                 for _, character in ipairs(globalState.allCharacters) do
-                    character.jobType = getJobType(character.job)
+                    character = processChar(character)
                 end
 
                 -- Broadcast to all clients
@@ -117,11 +172,12 @@ FrameworkPlugin = {
             end
 
             -- Database Setup
-            -- db:executeRaw("DROP TABLE IF EXISTS vehicles")
+            --db:executeRaw("DROP TABLE IF EXISTS characters")
+            --db:executeRaw("DROP TABLE IF EXISTS vehicles")
             db:executeRaw(
-                "CREATE TABLE IF NOT EXISTS characters (id INTEGER PRIMARY KEY AUTOINCREMENT, license TEXT, name TEXT, dob TEXT, gender TEXT, ethnicity TEXT, job TEXT, isDefault INTEGER, driversLicense TEXT, weaponsLicense TEXT)")
+                "CREATE TABLE IF NOT EXISTS characters (id INTEGER PRIMARY KEY AUTOINCREMENT, license TEXT, name TEXT, dob TEXT, gender TEXT, ethnicity TEXT, job TEXT, isDefault INTEGER, address TEXT, driversLicense TEXT, weaponsLicense TEXT)")
             db:executeRaw(
-                "CREATE TABLE IF NOT EXISTS vehicles (id INTEGER PRIMARY KEY AUTOINCREMENT, license TEXT, characterId INTEGER, vin TEXT, plate TEXT, make TEXT, model TEXT, type TEXT, primaryColor TEXT, secondaryColor TEXT, isStolen INTEGER)")
+                "CREATE TABLE IF NOT EXISTS vehicles (id INTEGER PRIMARY KEY AUTOINCREMENT, license TEXT, characterId INTEGER, vin TEXT, plate TEXT, make TEXT, model TEXT, type TEXT, primaryColor TEXT, secondaryColor TEXT, registration INTEGER, insurance INTEGER)")
 
             -- Event triggered when a player requests to fetch their characters and vehicles
             RegisterNetEvent("framework:characters:fetch")
@@ -142,6 +198,7 @@ FrameworkPlugin = {
                 TriggerClientEvent("framework:characters:receive", playerSrc, characters, defaultCharacter)
                 -- Send vehicles to the client
                 TriggerClientEvent("framework:vehicles:receive", playerSrc, vehicles)
+                broadcastStateUpdate()
             end)
 
             -- Event triggered when a player requests to delete a vehicle
@@ -225,6 +282,11 @@ FrameworkPlugin = {
                     db:update("characters", characterData, { id = characterData.id, license = license })
                 else
                     characterData.license = license
+                    local hasDefaultSet = db:select("characters", { "*" }, { isDefault = 1, license = license })
+                    local hasDefaultCharacterSet = hasDefaultSet and #hasDefaultSet > 0
+                    if not hasDefaultCharacterSet then
+                        characterData.isDefault = 1
+                    end
                     db:insert("characters", characterData)
                 end
 
@@ -278,13 +340,13 @@ FrameworkPlugin = {
                 if idType == "license" then
                     local characters, defaultCharacter = getSafeCharacters(identifier)
                     if defaultCharacter then
-                        defaultCharacter.jobType = getJobType(defaultCharacter.job)
+                        defaultCharacter = processChar(defaultCharacter)
                     end
                     return defaultCharacter
                 elseif idType == "id" then
                     local result = db:select("characters", { "*" }, { id = identifier })
                     if result and #result > 0 then
-                        result[1].jobType = getJobType(result[1].job)
+                        result[1] = processChar(result[1])
                         return result[1]
                     end
                 else
@@ -292,7 +354,7 @@ FrameworkPlugin = {
                     if not license then return nil end
                     local characters, defaultCharacter = getSafeCharacters(license)
                     if defaultCharacter then
-                        defaultCharacter.jobType = getJobType(defaultCharacter.job)
+                        defaultCharacter = processChar(defaultCharacter)
                     end
                     return defaultCharacter
                 end
@@ -317,38 +379,42 @@ FrameworkPlugin = {
                     local result = db:select("vehicles", { "*" }, { characterId = identifier })
                     return result or {}
                 else
-                local license = getPlayerLicense(identifier)
-                if not license then return nil end
-                local result = db:select("vehicles", { "*" }, { license = license })
-                return result or {}
+                    local license = getPlayerLicense(identifier)
+                    if not license then return nil end
+                    local result = db:select("vehicles", { "*" }, { license = license })
+                    return result or {}
                 end
             end)
 
             exports("getAllVehicles", function()
-                allVehicles = db:select("vehicles", { "*" }, {}, true)
+                allVehicles = db:select("vehicles", { "*" }, {}, true) or {}
                 return allVehicles
             end)
 
             exports("getAllCharacters", function()
-                allCharacters = db:select("characters", { "*" }, {}, true)
-                -- Add jobType for each character
+                allCharacters = db:select("characters", { "*" }, {}, true) or {}
                 for _, character in ipairs(allCharacters) do
-                    character.jobType = getJobType(character.job)
+                    character = processChar(character)
                 end
                 return allCharacters
             end)
 
             exports("getOnlineCharacters", function()
                 local result = db:select("characters", { "*" }, { isDefault = 1 })
+                local onlineCharacters = {}
                 for _, character in pairs(result) do
-                    character.jobType = getJobType(character.job)
+                    character = processChar(character)
                     for _, player in ipairs(GetPlayers()) do
                         local license = getPlayerLicense(player)
                         if license == character.license then
-                            return character
+                            if character.isDefault == 1 then
+                                character.source = player
+                                table.insert(onlineCharacters, character)
+                            end
                         end
                     end
                 end
+                return onlineCharacters
             end)
         else
             local allCharacters = {}
@@ -361,6 +427,7 @@ FrameworkPlugin = {
             AddEventHandler("framework:globalState:sync", function(state)
                 allCharacters = state.allCharacters
                 allVehicles = state.allVehicles
+                OnlineCharacters = state.OnlineCharacters
             end)
 
             Citizen.CreateThread(function()
@@ -450,7 +517,8 @@ FrameworkPlugin = {
                             type = details.type,
                             primaryColor = details.primaryColor,
                             secondaryColor = details.secondaryColor,
-                            isStolen = 0
+                            registration = 1,
+                            insurance = 1
                         }
 
                         vehicleData.vin = generateVIN(vehicleData)
@@ -490,7 +558,7 @@ FrameworkPlugin = {
 
             function openEditVehicleMenu(vehicle)
                 local tempVehicle = vehicle or
-                    { id = nil, vin = "", plate = "", name = "", primaryColor = "", secondaryColor = "", isStolen = 0, characterId = nil }
+                    { id = nil, vin = "", plate = "", name = "", primaryColor = "", secondaryColor = "", registration = 1, insurance = 1, characterId = nil }
 
                 exports["vMenu"]:AddButton("edit_vehicle_menu", "plate_input", "~g~VIN: " .. tempVehicle.vin,
                     "Vehicle VIN", function()
@@ -554,11 +622,18 @@ FrameworkPlugin = {
                         end
                     end)
 
-                local stolenIndex = tempVehicle.isStolen == 1 and 1 or 0
-                exports["vMenu"]:AddList("edit_vehicle_menu", "stolen_status", "~r~Stolen Status",
-                    json.encode({ "Not Stolen", "Stolen" }), stolenIndex, "Vehicle Stolen Status",
+                local registeredIndex = tempVehicle.registration == 1 and 1 or 0
+                exports["vMenu"]:AddList("edit_vehicle_menu", "register_status", "~r~Registration Status",
+                    json.encode({ "Expired", "Valid" }), registeredIndex, "Vehicle Registration",
                     function(_, _, selectedOption, isSelected)
-                        tempVehicle.isStolen = selectedOption == "Stolen" and 1 or 0
+                        tempVehicle.registration = selectedOption == "Registered" and 1 or 0
+                    end)
+
+                local insuranceIndex = tempVehicle.insurance == 1 and 1 or 0
+                exports["vMenu"]:AddList("edit_vehicle_menu", "insurance_status", "~r~Insurance Status",
+                    json.encode({ "Expired", "Valid" }), insuranceIndex, "Vehicle Insurance",
+                    function(_, _, selectedOption, isSelected)
+                        tempVehicle.insurance = selectedOption == "Registered" and 1 or 0
                     end)
 
                 exports["vMenu"]:AddButton("edit_vehicle_menu", "delete_vehicle", "~r~Delete Vehicle",
@@ -586,24 +661,25 @@ FrameworkPlugin = {
                         id = nil,
                         name = "",
                         dob = "",
+                        address = "Unknown",
                         gender = Config.Genders[1],
                         ethnicity = Config.Ethnicities[1],
                         job = string.lower(Config.Jobs[1].name) -- Default to first job name in lowercase
                     }
 
-                    local jobsList = {}
-                        local jobIndex = 0
+                local jobsList = {}
+                local jobIndex = 0
 
-                        -- Create a list of jobs the player has permission to use
-                        for i, jobData in ipairs(Config.Jobs) do
-                            if jobData.acePerm == "" or IsAceAllowed(jobData.acePerm) then
-                                table.insert(jobsList, jobData.name)
-                                -- Find the current job index based on lowercase comparison
-                                if string.lower(jobData.name) == tempCharacter.job then
-                                    jobIndex = #jobsList - 1
-                                end
-                            end
+                -- Create a list of jobs the player has permission to use
+                for i, jobData in ipairs(Config.Jobs) do
+                    if jobData.acePerm == "" or IsAceAllowed(jobData.acePerm) then
+                        table.insert(jobsList, jobData.name)
+                        -- Find the current job index based on lowercase comparison
+                        if string.lower(jobData.name) == tempCharacter.job then
+                            jobIndex = #jobsList - 1
                         end
+                    end
+                end
 
                 if character and character.id then
                     if not (curChar and curChar.id == character.id) then
@@ -660,7 +736,7 @@ FrameworkPlugin = {
                         end
                     end)
 
-                local driversLicenseStatuses = { "None", "Valid", "Suspended", "Revoked" }
+                local driversLicenseStatuses = { "None", "Valid", "Expired" }
                 local driversLicenseIndex = 0
                 for i, status in ipairs(driversLicenseStatuses) do
                     if status == tempCharacter.driversLicense then
@@ -669,13 +745,23 @@ FrameworkPlugin = {
                     end
                 end
 
+                exports["vMenu"]:AddButton("edit_character_menu", "address_input",
+                    "~g~Address: " .. tempCharacter.address,
+                    "Click to edit Address", function()
+                        local newValue = getInput("Enter Address:", tempCharacter.address)
+                        if newValue then
+                            tempCharacter.address = newValue
+                            populateEditCharacterMenu(tempCharacter)
+                        end
+                    end)
+
                 exports["vMenu"]:AddList("edit_character_menu", "drivers_license", "~b~Drivers License",
                     json.encode(driversLicenseStatuses), driversLicenseIndex, "Drivers License Status",
                     function(_, _, selectedOption, isSelected)
                         tempCharacter.driversLicense = selectedOption
                     end)
 
-                local weaponsLicenseStatuses = { "None", "Valid", "Suspended", "Revoked" }
+                local weaponsLicenseStatuses = { "None", "Valid", "Expired" }
                 local weaponsLicenseIndex = 0
                 for i, status in ipairs(weaponsLicenseStatuses) do
                     if status == tempCharacter.weaponsLicense then
@@ -691,10 +777,10 @@ FrameworkPlugin = {
                     end)
 
                 exports["vMenu"]:AddList("edit_character_menu", "job_selection", "~b~Job", json.encode(jobsList),
-                        jobIndex,
-                        "Select a job", function(_, _, selectedOption, isSelected)
-                            tempCharacter.job = string.lower(selectedOption)
-                        end)
+                    jobIndex,
+                    "Select a job", function(_, _, selectedOption, isSelected)
+                        tempCharacter.job = string.lower(selectedOption)
+                    end)
 
                 local genderIndex = 0
                 for index, gender in pairs(Config.Genders) do
@@ -1006,7 +1092,7 @@ FrameworkPlugin = {
 
             exports("getCharacter", function()
                 if curChar then
-                    curChar.jobType = getJobType(curChar.job)
+                    curChar = processChar(curChar)
                 end
                 return curChar
             end)
@@ -1016,11 +1102,11 @@ FrameworkPlugin = {
             end)
 
             exports("getAllCharacters", function()
-                -- Add jobType for each character
-                for _, character in ipairs(allCharacters) do
-                    character.jobType = getJobType(character.job)
-                end
                 return allCharacters
+            end)
+
+            exports("getOnlineCharacters", function()
+                return OnlineCharacters
             end)
 
             initRoleplayMenus()

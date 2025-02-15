@@ -8,30 +8,22 @@
 
 -- List of plugins to load
 local plugins = {
-    "CinematicCamPlugin",
     "ExamplePlugin",
+    "CinematicCamPlugin",
 }
 
-local reconstructMainMenu = true
 -- Default menu items, you can remove or re-order these as you like.
 local defaultMenuItems = {
     { id = "onlineplayers", name = "Online Players",          desc = "All currently connected players." },
-    --{id = "bannedplayers", name = "Banned Players", desc = "View and manage all banned players in this menu."},
+    {id = "bannedplayers", name = "Banned Players", desc = "View and manage all banned players in this menu."},
     { id = "player",        name = "Player Related Options",  desc = "Open this submenu for player related subcategories." },
     { id = "vehicle",       name = "Vehicle Related Options", desc = "Open this submenu for vehicle related subcategories." },
     { id = "world",         name = "World Related Options",   desc = "Open this submenu for world related subcategories." },
     { id = "voicechat",     name = "Voice Chat Settings",     desc = "Change Voice Chat options here." },
-    --{id = "recording", name = "Recording Options", desc = "In-game recording options."},
+    {id = "recording", name = "Recording Options", desc = "In-game recording options."},
     { id = "miscsettings",  name = "Misc Settings",           desc = "Miscellaneous vMenu options/settings can be configured here." },
-    { id = "about",         name = "About vMenu",             desc = "Information about vMenu."}
+    {id = "about", name = "About vMenu", desc = "Information about vMenu."}
 }
-
-
-
-
-
-
-
 
 
 
@@ -230,7 +222,8 @@ local function loadPlugin(pluginName)
     end
 
     -- Initialize the plugin
-    local success, error = pcall(plugin.init)
+    plugin.alive = true
+    local success, error = pcall(plugin.init, plugin)
     if not success then
         print(string.format("[vMenu] Error initializing plugin '%s': %s", plugin.name, tostring(error)))
         pluginsInProgress[pluginName] = nil
